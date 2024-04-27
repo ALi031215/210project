@@ -4,14 +4,62 @@ author: "Muhammad Shah, Alex Li"
 date: "2024-04-25"
 ---
 
-## Introduction and Data
-
-Briefly describe your project's motivation, the data, and your research question. Mention the data sources and provide definitions for key variables. Conduct exploratory data analysis focused on the response variable and key predictors.
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(caret)
 library(ggplot2)
-# Load your data here
-data <- read_csv("path/to/your/data.csv")
+```
+
+## Introduction
+
+The predictive modeling of NBA rookie success from college performance statistics offers significant insights for sports analytics, particularly in enhancing recruitment strategies and player evaluation processes. This analysis draws upon historical data to establish predictive relationships between collegiate statistics and professional performance in the NBA, aiming to support decision-making in sports management.
+
+## Research Question
+
+How effectively can NBA rookie success, quantified by points per game, be predicted from their college basketball statistics? This project seeks to leverage statistical modeling to predict NBA outcomes based on detailed college performance metrics.
+
+## Data Description
+
+This study utilizes two primary datasets:
+1. **College Basketball Dataset**: Detailed player statistics from NCAA college basketball from 2009 to 2021. This dataset includes variables like player efficiency rating and scoring averages, providing a comprehensive view of a player's collegiate career.
+2. **NBA Player Statistics**: This dataset contains statistics for NBA rookies' first season performance from 2009 to 2021, focusing on points per game and overall efficiency.
+
+### Key Variables:
+- `College_points`: Points per game in the player's final college season.
+- `eFG%`: Effective field goal percentage in college.
+- `TS%`: True shooting percentage in college.
+- `NBA_points`: Points per game during the player's rookie NBA season.
+
+### Data Cleaning and Merging Process
+The data was cleaned by renaming relevant columns for consistency and filtering for the last year of college and the first year in the NBA to focus on the transition period. Duplicate entries were removed, and data formats were normalized to facilitate merging.
+
+```{r load-data, echo=TRUE, message=FALSE, warning=FALSE}
+# Load libs
+library(dplyr)
+library(readr)
+library(stringr)
+
+# Reading and processing the college data
+college <- read_csv("CollegeBasketballPlayers2009-2021.csv") %>%
+  mutate(year = as.character(year)) %>%
+  rename(College_points = pts) %>%
+  arrange(desc(year)) %>%
+  distinct(player_name, .keep_all = TRUE) %>%
+  select(player_name, eFG, conf, TS_per, College_points, year)
+
+# Reading and processing the NBA data
+nba <- read_csv("NBA_Player_Stats.csv") %>%
+  mutate(Year = as.character(Year),
+         Year = str_split(Year, '-', simplify = TRUE)[, 1]) %>%
+  arrange(Year) %>%
+  rename(NBA_points = PTS,
+         player_name = Player) %>%
+  distinct(player_name, .keep_all = TRUE) %>%
+  select(player_name, NBA_points)
+
+# merging
+merged_points <- inner_join(college, nba, by = "player_name")
+```
+
+
