@@ -13,26 +13,35 @@ library(ggplot2)
 
 ## Introduction
 
-The predictive modeling of NBA rookie success from college performance statistics offers significant insights for sports analytics, particularly in enhancing recruitment strategies and player evaluation processes. This analysis draws upon historical data to establish predictive relationships between collegiate statistics and professional performance in the NBA, aiming to support decision-making in sports management.
+Predictive modeling of NBA rookie success based on college performance statistics provides crucial insights for sports analytics. This analysis utilizes historical data to establish relationships between collegiate achievements and professional performance in the NBA, thereby supporting decision-making in sports management.
 
 ## Research Question
 
-How effectively can NBA rookie success, quantified by points per game, be predicted from their college basketball statistics? This project seeks to leverage statistical modeling to predict NBA outcomes based on detailed college performance metrics.
+How can NBA rookie success, measured by points per game, be predicted from their college basketball statistics? This study employs statistical modeling techniques to forecast NBA outcomes from detailed collegiate performance metrics.
 
 ## Data Description
 
-This study utilizes two primary datasets:
-1. **College Basketball Dataset**: Detailed player statistics from NCAA college basketball from 2009 to 2021. This dataset includes variables like player efficiency rating and scoring averages, providing a comprehensive view of a player's collegiate career.
-2. **NBA Player Statistics**: This dataset contains statistics for NBA rookies' first season performance from 2009 to 2021, focusing on points per game and overall efficiency.
+This study employs two primary datasets:
+
+1. **College Basketball Dataset**: Consists of detailed player statistics from NCAA college basketball spanning 2009 to 2021. This dataset includes metrics such as player efficiency ratings and scoring averages. 
+
+[Source: https://www.kaggle.com/datasets/adityak2003/college-basketball-players-20092021/data]
+2. **NBA Player Statistics**: Contains performance data for NBA rookies' first season from 2009 to 2021, focusing on points per game and efficiency metrics. 
+
+[Source: https://www.kaggle.com/datasets/raunakpandey030/nba-player-stats]
 
 ### Key Variables:
-- `College_points`: Points per game in the player's final college season.
+- `College_points`: Average points scored per game in the player's final college season.
 - `eFG%`: Effective field goal percentage in college.
 - `TS%`: True shooting percentage in college.
-- `NBA_points`: Points per game during the player's rookie NBA season.
+- `NBA_points`: Average points per game during the player's rookie NBA season.
 
 ### Data Cleaning and Merging Process
-The data was cleaned by renaming relevant columns for consistency and filtering for the last year of college and the first year in the NBA to focus on the transition period. Duplicate entries were removed, and data formats were normalized to facilitate merging.
+The data was meticulously cleaned to ensure consistency and relevance to the study's goals. This involved:
+- Renaming columns for clarity.
+- Filtering records to retain only the last year of college and the first year in the NBA to focus on the transition period.
+- Removing duplicate entries and normalizing data formats for accurate merging.
+
 
 ```{r load-data, echo=TRUE, message=FALSE, warning=FALSE}
 # Load libs
@@ -60,6 +69,20 @@ nba <- read_csv("NBA_Player_Stats.csv") %>%
 
 # merging
 merged_points <- inner_join(college, nba, by = "player_name")
+```
+```{r}
+library(ggplot2)
+
+# Histogram of NBA Points
+ggplot(merged_points, aes(x = NBA_points)) +
+  geom_histogram(bins = 30, fill = "steelblue") +
+  labs(title = "Distribution of NBA Rookie Points", x = "NBA Points per Game", y = "Frequency")
+
+# Scatter plot of College Points vs. NBA Points
+ggplot(merged_points, aes(x = College_points, y = NBA_points)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", color = "red") +
+  labs(title = "Relationship between College Points and NBA Rookie Points", x = "College Points per Game", y = "NBA Points per Game")
 ```
 
 

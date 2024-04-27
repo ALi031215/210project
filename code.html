@@ -110,27 +110,27 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <section id="introduction" class="level2">
 <h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
-<p>The predictive modeling of NBA rookie success from college performance statistics offers significant insights for sports analytics, particularly in enhancing recruitment strategies and player evaluation processes. This analysis draws upon historical data to establish predictive relationships between collegiate statistics and professional performance in the NBA, aiming to support decision-making in sports management.</p>
+<p>Predictive modeling of NBA rookie success based on college performance statistics provides crucial insights for sports analytics. This analysis utilizes historical data to establish relationships between collegiate achievements and professional performance in the NBA, thereby supporting decision-making in sports management.</p>
 </section>
 <section id="research-question" class="level2">
 <h2 class="anchored" data-anchor-id="research-question">Research Question</h2>
-<p>How effectively can NBA rookie success, quantified by points per game, be predicted from their college basketball statistics? This project seeks to leverage statistical modeling to predict NBA outcomes based on detailed college performance metrics.</p>
+<p>How can NBA rookie success, measured by points per game, be predicted from their college basketball statistics? This study employs statistical modeling techniques to forecast NBA outcomes from detailed collegiate performance metrics.</p>
 </section>
 <section id="data-description" class="level2">
 <h2 class="anchored" data-anchor-id="data-description">Data Description</h2>
-<p>This study utilizes two primary datasets: 1. <strong>College Basketball Dataset</strong>: Detailed player statistics from NCAA college basketball from 2009 to 2021. This dataset includes variables like player efficiency rating and scoring averages, providing a comprehensive view of a player’s collegiate career. 2. <strong>NBA Player Statistics</strong>: This dataset contains statistics for NBA rookies’ first season performance from 2009 to 2021, focusing on points per game and overall efficiency.</p>
+<p>This study employs two primary datasets: 1. <strong>College Basketball Dataset</strong>: Consists of detailed player statistics from NCAA college basketball spanning 2009 to 2021. This dataset includes metrics such as player efficiency ratings and scoring averages. [Source: https://www.kaggle.com/datasets/adityak2003/college-basketball-players-20092021/data] 2. <strong>NBA Player Statistics</strong>: Contains performance data for NBA rookies’ first season from 2009 to 2021, focusing on points per game and efficiency metrics. [Source: https://www.kaggle.com/datasets/raunakpandey030/nba-player-stats]</p>
 <section id="key-variables" class="level3">
 <h3 class="anchored" data-anchor-id="key-variables">Key Variables:</h3>
 <ul>
-<li><code>College_points</code>: Points per game in the player’s final college season.</li>
+<li><code>College_points</code>: Average points scored per game in the player’s final college season.</li>
 <li><code>eFG%</code>: Effective field goal percentage in college.</li>
 <li><code>TS%</code>: True shooting percentage in college.</li>
-<li><code>NBA_points</code>: Points per game during the player’s rookie NBA season.</li>
+<li><code>NBA_points</code>: Average points per game during the player’s rookie NBA season.</li>
 </ul>
 </section>
 <section id="data-cleaning-and-merging-process" class="level3">
 <h3 class="anchored" data-anchor-id="data-cleaning-and-merging-process">Data Cleaning and Merging Process</h3>
-<p>The data was cleaned by renaming relevant columns for consistency and filtering for the last year of college and the first year in the NBA to focus on the transition period. Duplicate entries were removed, and data formats were normalized to facilitate merging.</p>
+<p>The data was meticulously cleaned to ensure consistency and relevance to the study’s goals. This involved: - Renaming columns for clarity. - Filtering records to retain only the last year of college and the first year in the NBA to focus on the transition period. - Removing duplicate entries and normalizing data formats for accurate merging.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load libs</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
@@ -157,6 +157,28 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="co"># merging</span></span>
 <span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>merged_points <span class="ot">&lt;-</span> <span class="fu">inner_join</span>(college, nba, <span class="at">by =</span> <span class="st">"player_name"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Histogram of NBA Points</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(merged_points, <span class="fu">aes</span>(<span class="at">x =</span> NBA_points)) <span class="sc">+</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="at">bins =</span> <span class="dv">30</span>, <span class="at">fill =</span> <span class="st">"steelblue"</span>) <span class="sc">+</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Distribution of NBA Rookie Points"</span>, <span class="at">x =</span> <span class="st">"NBA Points per Game"</span>, <span class="at">y =</span> <span class="st">"Frequency"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="code_files/figure-html/unnamed-chunk-1-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Scatter plot of College Points vs. NBA Points</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(merged_points, <span class="fu">aes</span>(<span class="at">x =</span> College_points, <span class="at">y =</span> NBA_points)) <span class="sc">+</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">method =</span> <span class="st">"lm"</span>, <span class="at">color =</span> <span class="st">"red"</span>) <span class="sc">+</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Relationship between College Points and NBA Rookie Points"</span>, <span class="at">x =</span> <span class="st">"College Points per Game"</span>, <span class="at">y =</span> <span class="st">"NBA Points per Game"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>`geom_smooth()` using formula = 'y ~ x'</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="code_files/figure-html/unnamed-chunk-1-2.png" class="img-fluid" width="672"></p>
+</div>
 </div>
 </section>
 </section>
