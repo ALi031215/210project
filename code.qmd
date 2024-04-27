@@ -1,1 +1,17 @@
+---
+title: "Predicting NBA Rookie Success from College Performance"
+author: "Muhammad Shah, Alex Li"
+date: "2024-04-25"
+---
 
+## Introduction and Data
+
+Briefly describe your project's motivation, the data, and your research question. Mention the data sources and provide definitions for key variables. Conduct exploratory data analysis focused on the response variable and key predictors.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(caret)
+library(ggplot2)
+# Load your data here
+data <- read_csv("path/to/your/data.csv")
