@@ -85,4 +85,133 @@ ggplot(merged_points, aes(x = College_points, y = NBA_points)) +
   labs(title = "Relationship between College Points and NBA Rookie Points", x = "College Points per Game", y = "NBA Points per Game")
 ```
 
+## Methodology
+
+### Model Selection Process
+
+The primary objective of this study is to predict NBA rookie success based on their college performance statistics. Given the nature of our response variable (NBA points per game, which is continuous), regression models were considered most appropriate for this analysis.
+
+#### Initial Model Choices
+We initially considered multiple regression models to handle the continuous nature of our target variable:
+- **Linear Regression**: Chosen for its simplicity and interpretability.
+- **Multilayer Perceptron (MLP) Regressor**: Selected for its ability to capture non-linear relationships that might exist between the predictors and the target.
+
+### Predictor Variables
+The predictor variables initially included were:
+- `eFG%` (Effective Field Goal Percentage)
+- `TS%` (True Shooting Percentage)
+- `College_points` (Average points per game during the player's final college season)
+
+These variables were chosen due to their direct relationship with scoring performance, which is our primary measure of NBA success.
+
+### Model Enhancement with One-Hot Encoding
+To improve the model’s performance, we introduced a categorical variable:
+- `conf` (Conference): This variable represents the college conference of each player, which could have an influence on the player's transition to the NBA due to varying levels of competition across conferences.
+
+One-hot encoding was applied to this categorical variable to convert it into a numerical format that could be used in our regression models. This allowed us to examine the impact of different conferences on NBA success.
+
+### Data Splitting
+The data was split into training and test sets with a 70-30 ratio, using a random seed for reproducibility (`random_state=999`). This split was chosen to provide a substantial training set for model development while leaving a sizable portion of data for testing model validity.
+
+### Model Fitting and Diagnostics
+Each model was trained on the training data set:
+- **Linear Regression and MLP Regressor**: Both models were fitted using their respective methods from the `scikit-learn` library.
+
+#### Model Evaluation Metrics
+To evaluate model performance, we calculated:
+- Mean Squared Error (MSE)
+- R-squared (R²)
+
+These metrics provide insights into the accuracy and explanatory power of the models, respectively.
+
+### Model Diagnostics and Validation
+After fitting the models, we conducted diagnostics to check for:
+- **Homoscedasticity**: Ensuring that the residuals have constant variance across predictions.
+- **Normality of Residuals**: Checked using Q-Q plots and Shapiro-Wilk tests.
+
+Violations of model assumptions were addressed by considering transformation of predictor variables and adding interaction terms where necessary.
+
+### Final Model Selection
+The final model selection was based on a combination of:
+- Performance metrics (lower MSE and higher R²)
+- Diagnostic results
+- Simplicity and interpretability for stakeholders
+
+```{r}
+# Load necessary libraries
+library(caret)
+library(nnet)  # For MLP
+library(dplyr)
+library(ModelMetrics)  # For mse and r2_score
+
+# Assume merged_points is already in your environment
+set.seed(999)
+training_indices <- createDataPartition(merged_points$NBA_points, p = 0.7, list = FALSE)
+train_data <- merged_points[training_indices, ]
+test_data <- merged_points[-training_indices, ]
+
+# Prepare data for modeling
+train_x <- train_data[, c("eFG", "TS_per", "College_points")]
+train_y <- train_data$NBA_points
+test_x <- test_data[, c("eFG", "TS_per", "College_points")]
+test_y <- test_data$NBA_points
+
+```
+
+```{r}
+linear_model <- lm(NBA_points ~ eFG + TS_per + College_points, data = train_data)
+summary(linear_model)
+
+# Predictions and model evaluation
+predictions_lm <- predict(linear_model, newdata = test_data)
+mse_lm <- mse(test_y, predictions_lm)
+r2_lm <- R2(predictions_lm, test_y)
+print(paste("Linear Model Test MSE:", mse_lm))
+print(paste("Linear Model Test R2:", r2_lm))
+
+```
+
+```{r}
+# Fit an MLP model
+mlp_model <- nnet::multinom(NBA_points ~ eFG + TS_per + College_points, data = train_data, size = c(50), decay = 0.1, maxit = 200)
+
+# Predict and evaluate
+predictions_mlp <- predict(mlp_model, newdata = test_data, type = "raw")
+mse_mlp <- mse(test_y, predictions_mlp)
+r2_mlp <- R2(predictions_mlp, test_y)
+print(paste("MLP Test MSE:", mse_mlp))
+print(paste("MLP Test R2:", r2_mlp))
+
+```
+
+
+```{r}
+# One-hot encoding for the 'conf' variable
+train_data <- model.matrix(~ conf - 1, data = train_data) %>% as.data.frame() %>%
+  bind_cols(train_data[, c("eFG", "TS_per", "College_points", "NBA_points")])
+
+test_data <- model.matrix(~ conf - 1, data = test_data) %>% as.data.frame() %>%
+  bind_cols(test_data[, c("eFG", "TS_per", "College_points", "NBA_points")])
+
+# Fitting the enhanced model
+enhanced_model <- lm(NBA_points ~ ., data = train_data)
+summary(enhanced_model)
+
+# Predictions and evaluation
+predictions_enhanced <- predict(enhanced_model, newdata = test_data)
+mse_enhanced <- mse(test_y, predictions_enhanced)
+r2_enhanced <- R2(predictions_enhanced, test_y)
+print(paste("Enhanced Model Test MSE:", mse_enhanced))
+print(paste("Enhanced Model Test R2:", r2_enhanced))
+
+```
+
+
+```{r}
+# Residual plot for Linear Model
+plot(residuals(linear_model), type = 'p', main = "Residual Plot for Linear Model")
+
+# Checking normality of residuals
+shapiro.test(residuals(linear_model))
+```
 

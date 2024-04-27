@@ -118,7 +118,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="data-description" class="level2">
 <h2 class="anchored" data-anchor-id="data-description">Data Description</h2>
-<p>This study employs two primary datasets: 1. <strong>College Basketball Dataset</strong>: Consists of detailed player statistics from NCAA college basketball spanning 2009 to 2021. This dataset includes metrics such as player efficiency ratings and scoring averages. [Source: https://www.kaggle.com/datasets/adityak2003/college-basketball-players-20092021/data] 2. <strong>NBA Player Statistics</strong>: Contains performance data for NBA rookies’ first season from 2009 to 2021, focusing on points per game and efficiency metrics. [Source: https://www.kaggle.com/datasets/raunakpandey030/nba-player-stats]</p>
+<p>This study employs two primary datasets:</p>
+<ol type="1">
+<li><strong>College Basketball Dataset</strong>: Consists of detailed player statistics from NCAA college basketball spanning 2009 to 2021. This dataset includes metrics such as player efficiency ratings and scoring averages.</li>
+</ol>
+<p>[Source: https://www.kaggle.com/datasets/adityak2003/college-basketball-players-20092021/data] 2. <strong>NBA Player Statistics</strong>: Contains performance data for NBA rookies’ first season from 2009 to 2021, focusing on points per game and efficiency metrics.</p>
+<p>[Source: https://www.kaggle.com/datasets/raunakpandey030/nba-player-stats]</p>
 <section id="key-variables" class="level3">
 <h3 class="anchored" data-anchor-id="key-variables">Key Variables:</h3>
 <ul>
@@ -181,6 +186,52 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </section>
+</section>
+<section id="methodology" class="level2">
+<h2 class="anchored" data-anchor-id="methodology">Methodology</h2>
+<section id="model-selection-process" class="level3">
+<h3 class="anchored" data-anchor-id="model-selection-process">Model Selection Process</h3>
+<p>The primary objective of this study is to predict NBA rookie success based on their college performance statistics. Given the nature of our response variable (NBA points per game, which is continuous), regression models were considered most appropriate for this analysis.</p>
+<section id="initial-model-choices" class="level4">
+<h4 class="anchored" data-anchor-id="initial-model-choices">Initial Model Choices</h4>
+<p>We initially considered multiple regression models to handle the continuous nature of our target variable: - <strong>Linear Regression</strong>: Chosen for its simplicity and interpretability. - <strong>Multilayer Perceptron (MLP) Regressor</strong>: Selected for its ability to capture non-linear relationships that might exist between the predictors and the target.</p>
+</section>
+</section>
+<section id="predictor-variables" class="level3">
+<h3 class="anchored" data-anchor-id="predictor-variables">Predictor Variables</h3>
+<p>The predictor variables initially included were: - <code>eFG%</code> (Effective Field Goal Percentage) - <code>TS%</code> (True Shooting Percentage) - <code>College_points</code> (Average points per game during the player’s final college season)</p>
+<p>These variables were chosen due to their direct relationship with scoring performance, which is our primary measure of NBA success.</p>
+</section>
+<section id="model-enhancement-with-one-hot-encoding" class="level3">
+<h3 class="anchored" data-anchor-id="model-enhancement-with-one-hot-encoding">Model Enhancement with One-Hot Encoding</h3>
+<p>To improve the model’s performance, we introduced a categorical variable: - <code>conf</code> (Conference): This variable represents the college conference of each player, which could have an influence on the player’s transition to the NBA due to varying levels of competition across conferences.</p>
+<p>One-hot encoding was applied to this categorical variable to convert it into a numerical format that could be used in our regression models. This allowed us to examine the impact of different conferences on NBA success.</p>
+</section>
+<section id="data-splitting" class="level3">
+<h3 class="anchored" data-anchor-id="data-splitting">Data Splitting</h3>
+<p>The data was split into training and test sets with a 70-30 ratio, using a random seed for reproducibility (<code>random_state=999</code>). This split was chosen to provide a substantial training set for model development while leaving a sizable portion of data for testing model validity.</p>
+</section>
+<section id="model-fitting-and-diagnostics" class="level3">
+<h3 class="anchored" data-anchor-id="model-fitting-and-diagnostics">Model Fitting and Diagnostics</h3>
+<p>Each model was trained on the training data set: - <strong>Linear Regression and MLP Regressor</strong>: Both models were fitted using their respective methods from the <code>scikit-learn</code> library.</p>
+<section id="model-evaluation-metrics" class="level4">
+<h4 class="anchored" data-anchor-id="model-evaluation-metrics">Model Evaluation Metrics</h4>
+<p>To evaluate model performance, we calculated: - Mean Squared Error (MSE) - R-squared (R²)</p>
+<p>These metrics provide insights into the accuracy and explanatory power of the models, respectively.</p>
+</section>
+</section>
+<section id="model-diagnostics-and-validation" class="level3">
+<h3 class="anchored" data-anchor-id="model-diagnostics-and-validation">Model Diagnostics and Validation</h3>
+<p>After fitting the models, we conducted diagnostics to check for: - <strong>Homoscedasticity</strong>: Ensuring that the residuals have constant variance across predictions. - <strong>Normality of Residuals</strong>: Checked using Q-Q plots and Shapiro-Wilk tests.</p>
+<p>Violations of model assumptions were addressed by considering transformation of predictor variables and adding interaction terms where necessary.</p>
+</section>
+<section id="final-model-selection" class="level3">
+<h3 class="anchored" data-anchor-id="final-model-selection">Final Model Selection</h3>
+<p>The final model selection was based on a combination of: - Performance metrics (lower MSE and higher R²) - Diagnostic results - Simplicity and interpretability for stakeholders</p>
+</section>
+</section>
+<section id="code-that-outputs-model-summaries-or-diagnostic-plots" class="level1">
+<h1>Code that outputs model summaries or diagnostic plots</h1>
 </section>
 
 </main>
