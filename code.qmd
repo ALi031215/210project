@@ -70,6 +70,9 @@ nba <- read_csv("NBA_Player_Stats.csv") %>%
 # merging
 merged_points <- inner_join(college, nba, by = "player_name")
 ```
+
+###Exploratory Data Analysis
+
 ```{r}
 library(ggplot2)
 
@@ -84,6 +87,9 @@ ggplot(merged_points, aes(x = College_points, y = NBA_points)) +
   geom_smooth(method = "lm", color = "red") +
   labs(title = "Relationship between College Points and NBA Rookie Points", x = "College Points per Game", y = "NBA Points per Game")
 ```
+The exploratory data analysis (EDA) in this study focuses on understanding the distribution of the key response variable, NBA points per game, as well as the relationship between college performance metrics and NBA success. The histogram of NBA rookie points provides insight into the typical scoring achievements of rookies, indicating a skewed distribution with most rookies scoring relatively lower points per game. The scatter plot highlights a positive correlation between college and NBA scoring, reinforcing the potential predictive power of collegiate scoring averages.
+
+Additionally, the boxplot of NBA points by college conference reveals variation in rookie success based on the conference from which players graduated, suggesting that the competitive level in different conferences may affect player readiness for the NBA. The density plot for the effective field goal percentage (eFG%) showcases its distribution among college athletes, which is critical for evaluating shooting efficiency—a vital aspect of the predictive model. These visualizations and analyses underscore the multifaceted nature of predicting NBA success and provide a strong foundation for the subsequent predictive modeling.
 
 ## Methodology
 
@@ -109,13 +115,48 @@ To improve the model’s performance, we introduced a categorical variable:
 - `conf` (Conference): This variable represents the college conference of each player, which could have an influence on the player's transition to the NBA due to varying levels of competition across conferences.
 
 One-hot encoding was applied to this categorical variable to convert it into a numerical format that could be used in our regression models. This allowed us to examine the impact of different conferences on NBA success.
+```{r}
+# One-hot encoding for the 'conf' variable
+train_data <- model.matrix(~ conf - 1, data = train_data) %>% as.data.frame() %>%
+  bind_cols(train_data[, c("eFG", "TS_per", "College_points", "NBA_points")])
+
+test_data <- model.matrix(~ conf - 1, data = test_data) %>% as.data.frame() %>%
+  bind_cols(test_data[, c("eFG", "TS_per", "College_points", "NBA_points")])
+
+```
 
 ### Data Splitting
 The data was split into training and test sets with a 70-30 ratio, using a random seed for reproducibility (`random_state=999`). This split was chosen to provide a substantial training set for model development while leaving a sizable portion of data for testing model validity.
+```{r}
+set.seed(999)
+training_indices <- createDataPartition(merged_points$NBA_points, p = 0.7, list = FALSE)
+train_data <- merged_points[training_indices, ]
+test_data <- merged_points[-training_indices, ]
+```
+
 
 ### Model Fitting and Diagnostics
 Each model was trained on the training data set:
 - **Linear Regression and MLP Regressor**: Both models were fitted using their respective methods from the `scikit-learn` library.
+```{r}
+linear_model <- lm(NBA_points ~ eFG + TS_per + College_points, data = train_data)
+summary(linear_model)
+
+# Load the required library
+library(nnet)
+
+# Fit an MLP model using the nnet function for regression, with reduced verbosity
+mlp_model <- nnet(NBA_points ~ eFG + TS_per + College_points, 
+                  data = train_data, 
+                  size = 5,        # Number of units in the hidden layer
+                  decay = 0.1,     # Weight decay for regularization
+                  maxit = 200,     # Maximum number of iterations
+                  linout = TRUE,   # Linear output activation function
+                  trace = FALSE)   # Set trace to FALSE to reduce output verbosity
+
+summary(mlp_model)
+```
+
 
 #### Model Evaluation Metrics
 To evaluate model performance, we calculated:
@@ -123,6 +164,62 @@ To evaluate model performance, we calculated:
 - R-squared (R²)
 
 These metrics provide insights into the accuracy and explanatory power of the models, respectively.
+```{r}
+# Linear model evaluation
+predictions_lm <- predict(linear_model, newdata = test_data)
+mse_lm <- mse(test_y, predictions_lm)
+r2_lm <- R2(predictions_lm, test_y)
+
+# MLP model evaluation
+predictions_mlp <- predict(mlp_model, newdata = test_data, type = "raw")
+mse_mlp <- mse(test_y, predictions_mlp)
+r2_mlp <- R2(predictions_mlp, test_y)
+
+model_performance <- data.frame(
+  Model = c("Linear Regression", "MLP Regressor"),
+  MSE = c(mse_lm, mse_mlp),
+  R2 = c(r2_lm, r2_mlp)
+)
+
+# Print the performance table
+print(model_performance)
+
+```
+
+```{r}
+library(ggplot2)
+
+# Assuming 'predictions_lm' and 'predictions_mlp' are already created from previous steps
+
+# Creating a data frame for plotting
+actual_vs_predicted_lm <- data.frame(
+  Actual = test_data$NBA_points,
+  Predicted = predictions_lm,
+  Model = 'Linear Regression'
+)
+
+actual_vs_predicted_mlp <- data.frame(
+  Actual = test_data$NBA_points,
+  Predicted = predictions_mlp,
+  Model = 'MLP Regressor'
+)
+
+# Combining both data frames
+all_predictions <- rbind(actual_vs_predicted_lm, actual_vs_predicted_mlp)
+
+# Plotting Actual vs Predicted Values for Both Models
+ggplot(all_predictions, aes(x = Actual, y = Predicted, color = Model)) +
+  geom_point(alpha = 0.5) +  # Using semi-transparent points
+  geom_smooth(method = "lm", se = FALSE, color = "black") +  # Adding a regression line without confidence interval
+  facet_wrap(~ Model) +  # Separate plots for each model
+  labs(title = "Actual vs Predicted NBA Points",
+       x = "Actual NBA Points per Game",
+       y = "Predicted NBA Points per Game") +
+  theme_minimal() +
+  scale_color_manual(values = c("blue", "green"))  # Custom colors for each model
+
+```
+
 
 ### Model Diagnostics and Validation
 After fitting the models, we conducted diagnostics to check for:
@@ -130,6 +227,14 @@ After fitting the models, we conducted diagnostics to check for:
 - **Normality of Residuals**: Checked using Q-Q plots and Shapiro-Wilk tests.
 
 Violations of model assumptions were addressed by considering transformation of predictor variables and adding interaction terms where necessary.
+```{r}
+# Residual plot for Linear Model
+plot(residuals(linear_model), type = 'p', main = "Residual Plot for Linear Model")
+
+# Checking normality of residuals
+shapiro.test(residuals(linear_model))
+
+```
 
 ### Final Model Selection
 The final model selection was based on a combination of:
