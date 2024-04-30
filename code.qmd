@@ -276,40 +276,8 @@ print(paste("Linear Model Test R2:", r2_lm))
 
 ```
 
-```{r}
-# Fit an MLP model
-mlp_model <- nnet::multinom(NBA_points ~ eFG + TS_per + College_points, data = train_data, size = c(50), decay = 0.1, maxit = 200)
-
-# Predict and evaluate
-predictions_mlp <- predict(mlp_model, newdata = test_data, type = "raw")
-mse_mlp <- mse(test_y, predictions_mlp)
-r2_mlp <- R2(predictions_mlp, test_y)
-print(paste("MLP Test MSE:", mse_mlp))
-print(paste("MLP Test R2:", r2_mlp))
-
-```
 
 
-```{r}
-# One-hot encoding for the 'conf' variable
-train_data <- model.matrix(~ conf - 1, data = train_data) %>% as.data.frame() %>%
-  bind_cols(train_data[, c("eFG", "TS_per", "College_points", "NBA_points")])
-
-test_data <- model.matrix(~ conf - 1, data = test_data) %>% as.data.frame() %>%
-  bind_cols(test_data[, c("eFG", "TS_per", "College_points", "NBA_points")])
-
-# Fitting the enhanced model
-enhanced_model <- lm(NBA_points ~ ., data = train_data)
-summary(enhanced_model)
-
-# Predictions and evaluation
-predictions_enhanced <- predict(enhanced_model, newdata = test_data)
-mse_enhanced <- mse(test_y, predictions_enhanced)
-r2_enhanced <- R2(predictions_enhanced, test_y)
-print(paste("Enhanced Model Test MSE:", mse_enhanced))
-print(paste("Enhanced Model Test R2:", r2_enhanced))
-
-```
 
 
 ```{r}
