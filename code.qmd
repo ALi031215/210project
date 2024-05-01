@@ -5,7 +5,7 @@ date: "2024-04-25"
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+
 library(Metrics)
 library(tidyverse)
 library(caret)
@@ -44,7 +44,7 @@ The data was meticulously cleaned to ensure consistency and relevance to the stu
 - Removing duplicate entries and normalizing data formats for accurate merging.
 
 
-```{r load-data, echo=TRUE, message=FALSE, warning=FALSE}
+```{r load, echo=FALSE}
 # Load libs
 library(dplyr)
 library(readr)
@@ -74,7 +74,8 @@ merged_points <- inner_join(college, nba, by = "player_name")
 
 ###Exploratory Data Analysis
 
-```{r}
+```{r eda, echo=FALSE}
+
 library(ggplot2)
 
 # Histogram of NBA Points
@@ -113,7 +114,8 @@ These variables were chosen due to their direct relationship with scoring perfor
 
 ### Data Splitting
 The data was split into training and test sets with a 70-30 ratio, using a random seed for reproducibility (`random_state=999`). This split was chosen to provide a substantial training set for model development while leaving a sizable portion of data for testing model validity.
-```{r}
+```{r splitting, echo=FALSE}
+
 set.seed(999)
 training_indices <- createDataPartition(merged_points$NBA_points, p = 0.7, list = FALSE)
 train_data <- merged_points[training_indices, ]
@@ -125,7 +127,8 @@ To improve the model’s performance, we introduced a categorical variable:
 - `conf` (Conference): This variable represents the college conference of each player, which could have an influence on the player's transition to the NBA due to varying levels of competition across conferences.
 
 One-hot encoding was applied to this categorical variable to convert it into a numerical format that could be used in our regression models. This allowed us to examine the impact of different conferences on NBA success.
-```{r}
+```{r onehot, echo=FALSE}
+
 # One-hot encoding for the 'conf' variable
 train_data <- model.matrix(~ conf - 1, data = train_data) %>% as.data.frame() %>%
   bind_cols(train_data[, c("eFG", "TS_per", "College_points", "NBA_points")])
@@ -139,7 +142,8 @@ test_data <- model.matrix(~ conf - 1, data = test_data) %>% as.data.frame() %>%
 ### Model Fitting and Diagnostics
 Each model was trained on the training data set:
 - **Linear Regression and MLP Regressor**: Both models were fitted using their respective methods from the `scikit-learn` library.
-```{r}
+```{r modelfitting, echo=FALSE}
+
 linear_model <- lm(NBA_points ~ eFG + TS_per + College_points, data = train_data)
 summary(linear_model)
 
@@ -165,7 +169,8 @@ To evaluate model performance, we calculated:
 - R-squared (R²)
 
 These metrics provide insights into the accuracy and explanatory power of the models, respectively.
-```{r}
+```{r evalmetrics, echo=FALSE}
+
 # Linear model evaluation
 predictions_lm <- predict(linear_model, newdata = test_data)
 mse_lm <- mse(test_data$NBA_points, predictions_lm)  # Fixing the use of test_y
@@ -187,7 +192,8 @@ print(model_performance)
 
 ```
 
-```{r}
+```{r results, echo=FALSE}
+
 library(ggplot2)
 
 # Assuming 'predictions_lm' and 'predictions_mlp' are already created from previous steps
@@ -228,7 +234,8 @@ After fitting the models, we conducted diagnostics to check for:
 - **Normality of Residuals**: Checked using Q-Q plots and Shapiro-Wilk tests.
 
 Violations of model assumptions were addressed by considering transformation of predictor variables and adding interaction terms where necessary.
-```{r}
+```{r plotting, echo=FALSE}
+
 # Residual plot for Linear Model
 plot(residuals(linear_model), type = 'p', main = "Residual Plot for Linear Model")
 
@@ -243,7 +250,8 @@ The final model selection was based on a combination of:
 - Diagnostic results
 - Simplicity and interpretability for stakeholders
 
-```{r}
+```{r final, echo=FALSE}
+
 # Load necessary libraries
 library(caret)
 library(nnet)  # For MLP
@@ -264,7 +272,8 @@ test_y <- test_data$NBA_points
 
 ```
 
-```{r}
+```{r summarized, echo=FALSE}
+
 linear_model <- lm(NBA_points ~ eFG + TS_per + College_points, data = train_data)
 summary(linear_model)
 
