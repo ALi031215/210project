@@ -6,6 +6,7 @@ date: "2024-04-25"
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(Metrics)
 library(tidyverse)
 library(caret)
 library(ggplot2)
@@ -110,6 +111,15 @@ The predictor variables initially included were:
 
 These variables were chosen due to their direct relationship with scoring performance, which is our primary measure of NBA success.
 
+### Data Splitting
+The data was split into training and test sets with a 70-30 ratio, using a random seed for reproducibility (`random_state=999`). This split was chosen to provide a substantial training set for model development while leaving a sizable portion of data for testing model validity.
+```{r}
+set.seed(999)
+training_indices <- createDataPartition(merged_points$NBA_points, p = 0.7, list = FALSE)
+train_data <- merged_points[training_indices, ]
+test_data <- merged_points[-training_indices, ]
+```
+
 ### Model Enhancement with One-Hot Encoding
 To improve the model’s performance, we introduced a categorical variable:
 - `conf` (Conference): This variable represents the college conference of each player, which could have an influence on the player's transition to the NBA due to varying levels of competition across conferences.
@@ -123,15 +133,6 @@ train_data <- model.matrix(~ conf - 1, data = train_data) %>% as.data.frame() %>
 test_data <- model.matrix(~ conf - 1, data = test_data) %>% as.data.frame() %>%
   bind_cols(test_data[, c("eFG", "TS_per", "College_points", "NBA_points")])
 
-```
-
-### Data Splitting
-The data was split into training and test sets with a 70-30 ratio, using a random seed for reproducibility (`random_state=999`). This split was chosen to provide a substantial training set for model development while leaving a sizable portion of data for testing model validity.
-```{r}
-set.seed(999)
-training_indices <- createDataPartition(merged_points$NBA_points, p = 0.7, list = FALSE)
-train_data <- merged_points[training_indices, ]
-test_data <- merged_points[-training_indices, ]
 ```
 
 
@@ -167,13 +168,13 @@ These metrics provide insights into the accuracy and explanatory power of the mo
 ```{r}
 # Linear model evaluation
 predictions_lm <- predict(linear_model, newdata = test_data)
-mse_lm <- mse(test_y, predictions_lm)
-r2_lm <- R2(predictions_lm, test_y)
+mse_lm <- mse(test_data$NBA_points, predictions_lm)  # Fixing the use of test_y
+r2_lm <- R2(predictions_lm, test_data$NBA_points)     # Fixing the use of test_y
 
 # MLP model evaluation
 predictions_mlp <- predict(mlp_model, newdata = test_data, type = "raw")
-mse_mlp <- mse(test_y, predictions_mlp)
-r2_mlp <- R2(predictions_mlp, test_y)
+mse_mlp <- mse(test_data$NBA_points, predictions_mlp)  # Fixing the use of test_y
+r2_mlp <- R2(predictions_mlp, test_data$NBA_points)     # Fixing the use of test_y
 
 model_performance <- data.frame(
   Model = c("Linear Regression", "MLP Regressor"),
@@ -275,7 +276,8 @@ print(paste("Linear Model Test MSE:", mse_lm))
 print(paste("Linear Model Test R2:", r2_lm))
 
 ```
-###Results
+
+### Results
 In this analysis, we employed several models to predict NBA rookie success based on their college performance metrics. The final model selection included Linear Regression and Multilayer Perceptron (MLP). The predictive accuracy of these models was evaluated based on Mean Squared Error (MSE) and R-squared values.
 
 Model Performance
@@ -287,7 +289,7 @@ College_points: There was a strong positive correlation between points scored pe
 eFG% and TS%: These efficiency metrics from college games also showed a strong relationship with NBA success, indicating that not only the quantity but also the quality of shots are critical predictors.
 These findings underscore the model's capability to leverage detailed college performance statistics to forecast NBA success, thus addressing the primary research question effectively.
 
-###Discussion
+### Discussion
 Summary of Findings
 The analysis revealed that certain college performance metrics, such as scoring averages and shooting efficiencies, are reliable indicators of NBA rookie success. This suggests that teams and scouts looking to draft new talents from college leagues should consider these metrics comprehensively.
 
@@ -299,7 +301,7 @@ Model Assumptions: Each model comes with inherent assumptions. For example, the 
 Validity and Reliability
 The reliability of the data is generally high as it originates from established databases like Kaggle. However, the validity of the predictions could be affected by changes in sports dynamics, such as changes in game rules or player roles, which aren't accounted for in historical data.
 
-###Future Work
+### Future Work
 
 There are a couple of limitations with our project that are important to address. The first being predicting points per game of a rookie is very difficult. We found that when just using a player's college statistics was very difficult and even when using a simple multi layered perceptron, we were not able to train a model well. We solved this problem by deciding to also use each player's NBA minutes. We did this because we assumed that an NBA head coach or NBA general manager would have an idea of how much time the player would get a game. Using this assumption, our models performed much better. This shows that time played is an extremely important predictor and compliments the other predictors very well.
 
@@ -309,7 +311,7 @@ Our original goal was to predict the success of an NBA rookie based on their col
 In the future I think having access to more data is critical in order to create a better predictive model. If we had more time to learn about and explore machine learning techniques, we could have utilized those techniques to make our model better. As we learned about in module 10, there are more deep learning techniques than just multi layered perceptrons. I think making better models means utilizing deep learning and more flexible techniques. 
 
 
-###Conclusion
+### Conclusion
 The study successfully demonstrates the use of statistical modeling to predict NBA rookie success from college performance metrics, with significant predictors being scoring averages and shooting efficiencies. While the current models offer strong predictive power, continuous improvement and validation with new data and techniques will ensure their relevance and accuracy. Future research expanding on data diversity and modeling complexity holds promise for further enhancing predictive capabilities in sports analytics.
 
 

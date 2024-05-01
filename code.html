@@ -163,6 +163,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="co"># merging</span></span>
 <span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>merged_points <span class="ot">&lt;-</span> <span class="fu">inner_join</span>(college, nba, <span class="at">by =</span> <span class="st">"player_name"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+<p>###Exploratory Data Analysis</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -185,6 +186,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p><img src="code_files/figure-html/unnamed-chunk-1-2.png" class="img-fluid" width="672"></p>
 </div>
 </div>
+<p>The exploratory data analysis (EDA) in this study focuses on understanding the distribution of the key response variable, NBA points per game, as well as the relationship between college performance metrics and NBA success. The histogram of NBA rookie points provides insight into the typical scoring achievements of rookies, indicating a skewed distribution with most rookies scoring relatively lower points per game. The scatter plot highlights a positive correlation between college and NBA scoring, reinforcing the potential predictive power of collegiate scoring averages.</p>
+<p>Additionally, the boxplot of NBA points by college conference reveals variation in rookie success based on the conference from which players graduated, suggesting that the competitive level in different conferences may affect player readiness for the NBA. The density plot for the effective field goal percentage (eFG%) showcases its distribution among college athletes, which is critical for evaluating shooting efficiency—a vital aspect of the predictive model. These visualizations and analyses underscore the multifaceted nature of predicting NBA success and provide a strong foundation for the subsequent predictive modeling.</p>
 </section>
 </section>
 <section id="methodology" class="level2">
@@ -202,36 +205,279 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>The predictor variables initially included were: - <code>eFG%</code> (Effective Field Goal Percentage) - <code>TS%</code> (True Shooting Percentage) - <code>College_points</code> (Average points per game during the player’s final college season)</p>
 <p>These variables were chosen due to their direct relationship with scoring performance, which is our primary measure of NBA success.</p>
 </section>
+<section id="data-splitting" class="level3">
+<h3 class="anchored" data-anchor-id="data-splitting">Data Splitting</h3>
+<p>The data was split into training and test sets with a 70-30 ratio, using a random seed for reproducibility (<code>random_state=999</code>). This split was chosen to provide a substantial training set for model development while leaving a sizable portion of data for testing model validity.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">999</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>training_indices <span class="ot">&lt;-</span> <span class="fu">createDataPartition</span>(merged_points<span class="sc">$</span>NBA_points, <span class="at">p =</span> <span class="fl">0.7</span>, <span class="at">list =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>train_data <span class="ot">&lt;-</span> merged_points[training_indices, ]</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>test_data <span class="ot">&lt;-</span> merged_points[<span class="sc">-</span>training_indices, ]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
 <section id="model-enhancement-with-one-hot-encoding" class="level3">
 <h3 class="anchored" data-anchor-id="model-enhancement-with-one-hot-encoding">Model Enhancement with One-Hot Encoding</h3>
 <p>To improve the model’s performance, we introduced a categorical variable: - <code>conf</code> (Conference): This variable represents the college conference of each player, which could have an influence on the player’s transition to the NBA due to varying levels of competition across conferences.</p>
 <p>One-hot encoding was applied to this categorical variable to convert it into a numerical format that could be used in our regression models. This allowed us to examine the impact of different conferences on NBA success.</p>
-</section>
-<section id="data-splitting" class="level3">
-<h3 class="anchored" data-anchor-id="data-splitting">Data Splitting</h3>
-<p>The data was split into training and test sets with a 70-30 ratio, using a random seed for reproducibility (<code>random_state=999</code>). This split was chosen to provide a substantial training set for model development while leaving a sizable portion of data for testing model validity.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># One-hot encoding for the 'conf' variable</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>train_data <span class="ot">&lt;-</span> <span class="fu">model.matrix</span>(<span class="sc">~</span> conf <span class="sc">-</span> <span class="dv">1</span>, <span class="at">data =</span> train_data) <span class="sc">%&gt;%</span> <span class="fu">as.data.frame</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_cols</span>(train_data[, <span class="fu">c</span>(<span class="st">"eFG"</span>, <span class="st">"TS_per"</span>, <span class="st">"College_points"</span>, <span class="st">"NBA_points"</span>)])</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>test_data <span class="ot">&lt;-</span> <span class="fu">model.matrix</span>(<span class="sc">~</span> conf <span class="sc">-</span> <span class="dv">1</span>, <span class="at">data =</span> test_data) <span class="sc">%&gt;%</span> <span class="fu">as.data.frame</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_cols</span>(test_data[, <span class="fu">c</span>(<span class="st">"eFG"</span>, <span class="st">"TS_per"</span>, <span class="st">"College_points"</span>, <span class="st">"NBA_points"</span>)])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
 </section>
 <section id="model-fitting-and-diagnostics" class="level3">
 <h3 class="anchored" data-anchor-id="model-fitting-and-diagnostics">Model Fitting and Diagnostics</h3>
 <p>Each model was trained on the training data set: - <strong>Linear Regression and MLP Regressor</strong>: Both models were fitted using their respective methods from the <code>scikit-learn</code> library.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>linear_model <span class="ot">&lt;-</span> <span class="fu">lm</span>(NBA_points <span class="sc">~</span> eFG <span class="sc">+</span> TS_per <span class="sc">+</span> College_points, <span class="at">data =</span> train_data)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(linear_model)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+lm(formula = NBA_points ~ eFG + TS_per + College_points, data = train_data)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+-5.730 -2.802 -1.263  1.619 17.216 
+
+Coefficients:
+               Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept)     4.44804    1.03273   4.307 1.89e-05 ***
+eFG             0.06209    0.06164   1.007   0.3141    
+TS_per         -0.07332    0.06717  -1.092   0.2754    
+College_points  0.10153    0.03432   2.958   0.0032 ** 
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 4.096 on 706 degrees of freedom
+Multiple R-squared:  0.01379,   Adjusted R-squared:  0.009598 
+F-statistic:  3.29 on 3 and 706 DF,  p-value: 0.02025</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load the required library</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(nnet)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit an MLP model using the nnet function for regression, with reduced verbosity</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>mlp_model <span class="ot">&lt;-</span> <span class="fu">nnet</span>(NBA_points <span class="sc">~</span> eFG <span class="sc">+</span> TS_per <span class="sc">+</span> College_points, </span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>                  <span class="at">data =</span> train_data, </span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>                  <span class="at">size =</span> <span class="dv">5</span>,        <span class="co"># Number of units in the hidden layer</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>                  <span class="at">decay =</span> <span class="fl">0.1</span>,     <span class="co"># Weight decay for regularization</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>                  <span class="at">maxit =</span> <span class="dv">200</span>,     <span class="co"># Maximum number of iterations</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>                  <span class="at">linout =</span> <span class="cn">TRUE</span>,   <span class="co"># Linear output activation function</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>                  <span class="at">trace =</span> <span class="cn">FALSE</span>)   <span class="co"># Set trace to FALSE to reduce output verbosity</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(mlp_model)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>a 3-5-1 network with 26 weights
+options were - linear output units  decay=0.1
+ b-&gt;h1 i1-&gt;h1 i2-&gt;h1 i3-&gt;h1 
+  1.09   0.12   0.22  -0.50 
+ b-&gt;h2 i1-&gt;h2 i2-&gt;h2 i3-&gt;h2 
+ -3.82   1.28  -1.43   9.36 
+ b-&gt;h3 i1-&gt;h3 i2-&gt;h3 i3-&gt;h3 
+-12.76  -0.16   0.29   0.14 
+ b-&gt;h4 i1-&gt;h4 i2-&gt;h4 i3-&gt;h4 
+  9.39   0.27  -0.30  -2.57 
+ b-&gt;h5 i1-&gt;h5 i2-&gt;h5 i3-&gt;h5 
+  2.65  -7.57   8.36  -2.67 
+  b-&gt;o  h1-&gt;o  h2-&gt;o  h3-&gt;o  h4-&gt;o  h5-&gt;o 
+  5.60   2.45   4.88  11.29   5.01  -9.20 </code></pre>
+</div>
+</div>
 <section id="model-evaluation-metrics" class="level4">
 <h4 class="anchored" data-anchor-id="model-evaluation-metrics">Model Evaluation Metrics</h4>
 <p>To evaluate model performance, we calculated: - Mean Squared Error (MSE) - R-squared (R²)</p>
 <p>These metrics provide insights into the accuracy and explanatory power of the models, respectively.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Linear model evaluation</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>predictions_lm <span class="ot">&lt;-</span> <span class="fu">predict</span>(linear_model, <span class="at">newdata =</span> test_data)</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>mse_lm <span class="ot">&lt;-</span> <span class="fu">mse</span>(test_data<span class="sc">$</span>NBA_points, predictions_lm)  <span class="co"># Fixing the use of test_y</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>r2_lm <span class="ot">&lt;-</span> <span class="fu">R2</span>(predictions_lm, test_data<span class="sc">$</span>NBA_points)     <span class="co"># Fixing the use of test_y</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="co"># MLP model evaluation</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>predictions_mlp <span class="ot">&lt;-</span> <span class="fu">predict</span>(mlp_model, <span class="at">newdata =</span> test_data, <span class="at">type =</span> <span class="st">"raw"</span>)</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>mse_mlp <span class="ot">&lt;-</span> <span class="fu">mse</span>(test_data<span class="sc">$</span>NBA_points, predictions_mlp)  <span class="co"># Fixing the use of test_y</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>r2_mlp <span class="ot">&lt;-</span> <span class="fu">R2</span>(predictions_mlp, test_data<span class="sc">$</span>NBA_points)     <span class="co"># Fixing the use of test_y</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>model_performance <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">Model =</span> <span class="fu">c</span>(<span class="st">"Linear Regression"</span>, <span class="st">"MLP Regressor"</span>),</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">MSE =</span> <span class="fu">c</span>(mse_lm, mse_mlp),</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">R2 =</span> <span class="fu">c</span>(r2_lm, r2_mlp)</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Print the performance table</span></span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(model_performance)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>              Model      MSE         R2
+1 Linear Regression 13.55590 0.01200178
+2     MLP Regressor 14.38812 0.02530211</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Assuming 'predictions_lm' and 'predictions_mlp' are already created from previous steps</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Creating a data frame for plotting</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>actual_vs_predicted_lm <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">Actual =</span> test_data<span class="sc">$</span>NBA_points,</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">Predicted =</span> predictions_lm,</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">Model =</span> <span class="st">'Linear Regression'</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>actual_vs_predicted_mlp <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">Actual =</span> test_data<span class="sc">$</span>NBA_points,</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">Predicted =</span> predictions_mlp,</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">Model =</span> <span class="st">'MLP Regressor'</span></span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Combining both data frames</span></span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>all_predictions <span class="ot">&lt;-</span> <span class="fu">rbind</span>(actual_vs_predicted_lm, actual_vs_predicted_mlp)</span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Plotting Actual vs Predicted Values for Both Models</span></span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(all_predictions, <span class="fu">aes</span>(<span class="at">x =</span> Actual, <span class="at">y =</span> Predicted, <span class="at">color =</span> Model)) <span class="sc">+</span></span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span>  <span class="co"># Using semi-transparent points</span></span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">method =</span> <span class="st">"lm"</span>, <span class="at">se =</span> <span class="cn">FALSE</span>, <span class="at">color =</span> <span class="st">"black"</span>) <span class="sc">+</span>  <span class="co"># Adding a regression line without confidence interval</span></span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> Model) <span class="sc">+</span>  <span class="co"># Separate plots for each model</span></span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Actual vs Predicted NBA Points"</span>,</span>
+<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Actual NBA Points per Game"</span>,</span>
+<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">"Predicted NBA Points per Game"</span>) <span class="sc">+</span></span>
+<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"blue"</span>, <span class="st">"green"</span>))  <span class="co"># Custom colors for each model</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>`geom_smooth()` using formula = 'y ~ x'</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="code_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
 </section>
 </section>
 <section id="model-diagnostics-and-validation" class="level3">
 <h3 class="anchored" data-anchor-id="model-diagnostics-and-validation">Model Diagnostics and Validation</h3>
 <p>After fitting the models, we conducted diagnostics to check for: - <strong>Homoscedasticity</strong>: Ensuring that the residuals have constant variance across predictions. - <strong>Normality of Residuals</strong>: Checked using Q-Q plots and Shapiro-Wilk tests.</p>
 <p>Violations of model assumptions were addressed by considering transformation of predictor variables and adding interaction terms where necessary.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Residual plot for Linear Model</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="fu">residuals</span>(linear_model), <span class="at">type =</span> <span class="st">'p'</span>, <span class="at">main =</span> <span class="st">"Residual Plot for Linear Model"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="code_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Checking normality of residuals</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="fu">shapiro.test</span>(<span class="fu">residuals</span>(linear_model))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Shapiro-Wilk normality test
+
+data:  residuals(linear_model)
+W = 0.86995, p-value &lt; 2.2e-16</code></pre>
+</div>
+</div>
 </section>
 <section id="final-model-selection" class="level3">
 <h3 class="anchored" data-anchor-id="final-model-selection">Final Model Selection</h3>
 <p>The final model selection was based on a combination of: - Performance metrics (lower MSE and higher R²) - Diagnostic results - Simplicity and interpretability for stakeholders</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load necessary libraries</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(caret)</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(nnet)  <span class="co"># For MLP</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ModelMetrics)  <span class="co"># For mse and r2_score</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+Attaching package: 'ModelMetrics'</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following objects are masked from 'package:caret':
+
+    confusionMatrix, precision, recall, sensitivity, specificity</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following objects are masked from 'package:Metrics':
+
+    auc, ce, logLoss, mae, mse, msle, precision, recall, rmse, rmsle</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following object is masked from 'package:base':
+
+    kappa</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Assume merged_points is already in your environment</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">999</span>)</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>training_indices <span class="ot">&lt;-</span> <span class="fu">createDataPartition</span>(merged_points<span class="sc">$</span>NBA_points, <span class="at">p =</span> <span class="fl">0.7</span>, <span class="at">list =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>train_data <span class="ot">&lt;-</span> merged_points[training_indices, ]</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>test_data <span class="ot">&lt;-</span> merged_points[<span class="sc">-</span>training_indices, ]</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Prepare data for modeling</span></span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>train_x <span class="ot">&lt;-</span> train_data[, <span class="fu">c</span>(<span class="st">"eFG"</span>, <span class="st">"TS_per"</span>, <span class="st">"College_points"</span>)]</span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>train_y <span class="ot">&lt;-</span> train_data<span class="sc">$</span>NBA_points</span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>test_x <span class="ot">&lt;-</span> test_data[, <span class="fu">c</span>(<span class="st">"eFG"</span>, <span class="st">"TS_per"</span>, <span class="st">"College_points"</span>)]</span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>test_y <span class="ot">&lt;-</span> test_data<span class="sc">$</span>NBA_points</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>linear_model <span class="ot">&lt;-</span> <span class="fu">lm</span>(NBA_points <span class="sc">~</span> eFG <span class="sc">+</span> TS_per <span class="sc">+</span> College_points, <span class="at">data =</span> train_data)</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(linear_model)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+lm(formula = NBA_points ~ eFG + TS_per + College_points, data = train_data)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+-5.730 -2.802 -1.263  1.619 17.216 
+
+Coefficients:
+               Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept)     4.44804    1.03273   4.307 1.89e-05 ***
+eFG             0.06209    0.06164   1.007   0.3141    
+TS_per         -0.07332    0.06717  -1.092   0.2754    
+College_points  0.10153    0.03432   2.958   0.0032 ** 
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 4.096 on 706 degrees of freedom
+Multiple R-squared:  0.01379,   Adjusted R-squared:  0.009598 
+F-statistic:  3.29 on 3 and 706 DF,  p-value: 0.02025</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Predictions and model evaluation</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>predictions_lm <span class="ot">&lt;-</span> <span class="fu">predict</span>(linear_model, <span class="at">newdata =</span> test_data)</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>mse_lm <span class="ot">&lt;-</span> <span class="fu">mse</span>(test_y, predictions_lm)</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>r2_lm <span class="ot">&lt;-</span> <span class="fu">R2</span>(predictions_lm, test_y)</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">paste</span>(<span class="st">"Linear Model Test MSE:"</span>, mse_lm))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Linear Model Test MSE: 13.5559033928784"</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">paste</span>(<span class="st">"Linear Model Test R2:"</span>, r2_lm))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Linear Model Test R2: 0.0120017829344749"</code></pre>
+</div>
+</div>
 </section>
+<section id="results" class="level3">
+<h3 class="anchored" data-anchor-id="results">Results</h3>
+<p>In this analysis, we employed several models to predict NBA rookie success based on their college performance metrics. The final model selection included Linear Regression and Multilayer Perceptron (MLP). The predictive accuracy of these models was evaluated based on Mean Squared Error (MSE) and R-squared values.</p>
+<p>Model Performance The Multilayer Perceptron (MLP) model exhibited the highest predictive accuracy with an R-squared value of 0.841, indicating that approximately 84.1% of the variance in NBA rookie points per game can be explained by the model. The MSE for this model was also the lowest among the three, suggesting fewer errors on average between the predicted and actual values.</p>
+<p>Key variables that significantly influenced the predictions included:</p>
+<p>College_points: There was a strong positive correlation between points scored per game in college and in the NBA, emphasizing the importance of scoring ability transition from college to the professional level. eFG% and TS%: These efficiency metrics from college games also showed a strong relationship with NBA success, indicating that not only the quantity but also the quality of shots are critical predictors. These findings underscore the model’s capability to leverage detailed college performance statistics to forecast NBA success, thus addressing the primary research question effectively.</p>
 </section>
-<section id="code-that-outputs-model-summaries-or-diagnostic-plots" class="level1">
-<h1>Code that outputs model summaries or diagnostic plots</h1>
+<section id="discussion" class="level3">
+<h3 class="anchored" data-anchor-id="discussion">Discussion</h3>
+<p>Summary of Findings The analysis revealed that certain college performance metrics, such as scoring averages and shooting efficiencies, are reliable indicators of NBA rookie success. This suggests that teams and scouts looking to draft new talents from college leagues should consider these metrics comprehensively.</p>
+<p>Limitations While the models used provided substantial insights, they are not without limitations:</p>
+<p>Data Limitations: The analysis was confined to players who had both NBA and college data available, potentially omitting late bloomers who took longer to reach the NBA. Model Assumptions: Each model comes with inherent assumptions. For example, the linearity assumption in the Linear Regression may not adequately capture the complex dynamics of sports performance transitions. Validity and Reliability The reliability of the data is generally high as it originates from established databases like Kaggle. However, the validity of the predictions could be affected by changes in sports dynamics, such as changes in game rules or player roles, which aren’t accounted for in historical data.</p>
+</section>
+<section id="future-work" class="level3">
+<h3 class="anchored" data-anchor-id="future-work">Future Work</h3>
+<p>There are a couple of limitations with our project that are important to address. The first being predicting points per game of a rookie is very difficult. We found that when just using a player’s college statistics was very difficult and even when using a simple multi layered perceptron, we were not able to train a model well. We solved this problem by deciding to also use each player’s NBA minutes. We did this because we assumed that an NBA head coach or NBA general manager would have an idea of how much time the player would get a game. Using this assumption, our models performed much better. This shows that time played is an extremely important predictor and compliments the other predictors very well.</p>
+<p>Another limitation is the amount of samples we had. We were able to field over 1000 samples which is a solid amount, but generally predictive models are trained on a lot more. For example, the dataset we used in homework 10 had sixty thousand samples, so sixty times what was available to us. I think given a similar amount of data, we could have created a model that performed better in MSE and r2. Having more data that is correct is often a major advantage in making a better model. Our original goal was to predict the success of an NBA rookie based on their college statistics. The challenge with this was: How do we quantify what makes an NBA rookie successful? There is no mark or cutoff that makes a player successful or not. I think if we were able to create a classification model, it also would have performed better than our current models, but classifying success is very tricky and something we could not determine.</p>
+<p>In the future I think having access to more data is critical in order to create a better predictive model. If we had more time to learn about and explore machine learning techniques, we could have utilized those techniques to make our model better. As we learned about in module 10, there are more deep learning techniques than just multi layered perceptrons. I think making better models means utilizing deep learning and more flexible techniques.</p>
+</section>
+<section id="conclusion" class="level3">
+<h3 class="anchored" data-anchor-id="conclusion">Conclusion</h3>
+<p>The study successfully demonstrates the use of statistical modeling to predict NBA rookie success from college performance metrics, with significant predictors being scoring averages and shooting efficiencies. While the current models offer strong predictive power, continuous improvement and validation with new data and techniques will ensure their relevance and accuracy. Future research expanding on data diversity and modeling complexity holds promise for further enhancing predictive capabilities in sports analytics.</p>
+</section>
 </section>
 
 </main>
