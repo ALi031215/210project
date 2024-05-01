@@ -135,9 +135,14 @@ The data was split into training and test sets with a 70-30 ratio, using a rando
 
 ```{r}
 library(caret)
-set.seed(123) # Ensuring reproducibility
+library(RSNNS)
+library(nnet)  # For MLP
+library(dplyr)
+library(ModelMetrics)  # For mse and r2_score
 
-# Splitting the data into training (70%) and testing (30%) sets
+set.seed(123) # for reproducibility
+
+# Splitting the data into training and testing sets
 train_index <- createDataPartition(final_data$NBA_points, p = 0.7, list = FALSE)
 train_data <- final_data[train_index, ]
 test_data <- final_data[-train_index, ]
@@ -146,10 +151,15 @@ test_data <- final_data[-train_index, ]
 lm_model <- lm(NBA_points ~ ., data = train_data)
 summary(lm_model)
 
+# Training the Random Forest model
+rf_model <- train(NBA_points ~ ., data = train_data, method = "rf",
+                  trControl = trainControl(method = "cv", number = 10))
 
 # Training the MLP model
 mlp_model <- train(NBA_points ~ ., data = train_data, method = "mlp",
                    trControl = trainControl(method = "cv", number = 10))
+
+
 
 ```
 
@@ -158,7 +168,7 @@ mlp_model <- train(NBA_points ~ ., data = train_data, method = "mlp",
 Each model was trained on the training data set: - **Linear Regression and MLP Regressor**: Both models were fitted using their respective methods from the `scikit-learn` library.
 
 ```{r}
-linear_model <- lm(NBA_points ~ eFG + TS_per + College_points, data =  merged_data)
+linear_model <- lm(NBA_points ~ eFG + TS_per + College_points, data =  final_data)
 summary(linear_model)
 
 # Load the required library
@@ -211,7 +221,7 @@ library(ggplot2)
 
 # Creating a data frame for plotting
 actual_vs_predicted_lm <- data.frame(
-  Actual = merged_points$NBA_points,
+  Actual = final_data$NBA_points,
   Predicted = predictions_lm,
   Model = 'Linear Regression'
 )
