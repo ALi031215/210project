@@ -16,17 +16,18 @@ library(ggplot2)
 
 Predictive modeling of NBA rookie success based on college performance statistics provides crucial insights for sports analytics. This analysis utilizes historical data to establish relationships between collegiate achievements and professional performance in the NBA, thereby supporting decision-making in sports management.
 
-## Research Question
+### Research Question
 
 How can NBA rookie success, measured by points per game, be predicted from their college basketball statistics? This study employs statistical modeling techniques to forecast NBA outcomes from detailed collegiate performance metrics.
 
-## Data Description
+### Data Description
 
 This study employs two primary datasets:
 
 1. **College Basketball Dataset**: Consists of detailed player statistics from NCAA college basketball spanning 2009 to 2021. This dataset includes metrics such as player efficiency ratings and scoring averages. 
 
 [Source: https://www.kaggle.com/datasets/adityak2003/college-basketball-players-20092021/data]
+
 2. **NBA Player Statistics**: Contains performance data for NBA rookies' first season from 2009 to 2021, focusing on points per game and efficiency metrics. 
 
 [Source: https://www.kaggle.com/datasets/raunakpandey030/nba-player-stats]
@@ -72,37 +73,57 @@ nba <- read_csv("NBA_Player_Stats.csv") %>%
 merged_points <- inner_join(college, nba, by = "player_name")
 ```
 
-###Exploratory Data Analysis
+### Exploratory Data Analysis
 
 ```{r eda, echo=FALSE}
 
-library(ggplot2)
-
-# Histogram of NBA Points
-ggplot(merged_points, aes(x = NBA_points)) +
-  geom_histogram(bins = 30, fill = "steelblue") +
-  labs(title = "Distribution of NBA Rookie Points", x = "NBA Points per Game", y = "Frequency")
-
-# Scatter plot of College Points vs. NBA Points
+# 1. Relationship between College Points and NBA Points with Linear Model Fit
 ggplot(merged_points, aes(x = College_points, y = NBA_points)) +
-  geom_point(alpha = 0.5) +
+  geom_point(aes(color = conf), alpha = 0.6) +
   geom_smooth(method = "lm", color = "red") +
-  labs(title = "Relationship between College Points and NBA Rookie Points", x = "College Points per Game", y = "NBA Points per Game")
-```
-The exploratory data analysis (EDA) in this study focuses on understanding the distribution of the key response variable, NBA points per game, as well as the relationship between college performance metrics and NBA success. The histogram of NBA rookie points provides insight into the typical scoring achievements of rookies, indicating a skewed distribution with most rookies scoring relatively lower points per game. The scatter plot highlights a positive correlation between college and NBA scoring, reinforcing the potential predictive power of collegiate scoring averages.
+  labs(title = "Relationship between College Points and NBA Rookie Points",
+       subtitle = "Each point represents a player; colored by conference",
+       x = "College Points per Game", y = "NBA Points per Game") +
+  theme_minimal()
 
-Additionally, the boxplot of NBA points by college conference reveals variation in rookie success based on the conference from which players graduated, suggesting that the competitive level in different conferences may affect player readiness for the NBA. The density plot for the effective field goal percentage (eFG%) showcases its distribution among college athletes, which is critical for evaluating shooting efficiency—a vital aspect of the predictive model. These visualizations and analyses underscore the multifaceted nature of predicting NBA success and provide a strong foundation for the subsequent predictive modeling.
+# 2. Explore the efficiency (eFG% and TS%) and its impact on NBA Points
+ggplot(merged_points, aes(x = eFG, y = NBA_points)) +
+  geom_point(aes(color = conf), alpha = 0.6) +
+  geom_smooth(method = "lm", se = TRUE, color = "blue") +
+  labs(title = "Effect of College Effective Field Goal Percentage on NBA Points",
+       subtitle = "Linear model fit shown in blue",
+       x = "Effective Field Goal Percentage", y = "NBA Points per Game") +
+  theme_minimal()
+
+ggplot(merged_points, aes(x = TS_per, y = NBA_points)) +
+  geom_point(aes(color = conf), alpha = 0.6) +
+  geom_smooth(method = "lm", se = TRUE, color = "green") +
+  labs(title = "Impact of College True Shooting Percentage on NBA Points",
+       subtitle = "Linear model fit shown in green",
+       x = "True Shooting Percentage", y = "NBA Points per Game") +
+  theme_minimal()
+```
+
+The exploratory data analysis aims to correlate college performance metrics with NBA rookie success, focusing on points per game through visualizations that underscore data distribution and trends.
+
+Relationship between College Points and NBA Rookie Points:
+This analysis begins with a scatter plot displaying the relationship between college scoring averages and NBA rookie points. Each data point represents a player, colored by their college conference, overlayed with a linear regression line. The plot suggests a positive correlation between college and NBA scoring, though variability is high. This variability may reflect differences in playing style, player roles, or other factors affecting a player’s transition from college to the NBA.
+
+Effect of College Effective Field Goal Percentage on NBA Points:
+A second plot examines how college effective field goal percentage (eFG%) relates to NBA points. A linear fit indicates a modest positive correlation, implying that higher eFG% in college might predict better NBA performance. However, the relationship is not definitive, suggesting that eFG% may not fully predict NBA success without considering other contextual factors like the player's role and gameplay system.
+
+Impact of College True Shooting Percentage on NBA Points:
+The final plot explores the relationship between college true shooting percentage (TS%) and NBA rookie points. The positive trend shown by the green regression line suggests that TS%, which accounts for overall shooting efficiency including 3-pointers and free throws, might be a slightly better predictor of NBA success than eFG% alone.
 
 ## Methodology
 
 ### Model Selection Process
 
-The primary objective of this study is to predict NBA rookie success based on their college performance statistics. Given the nature of our response variable (NBA points per game, which is continuous), regression models were considered most appropriate for this analysis.
+In this study, we aimed to predict NBA rookie success, quantified by points per game, using their college basketball statistics. Given the continuous nature of our response variable, we considered regression models, which are well-suited for predicting quantitative outcomes. We selected two types of models for our analysis:
 
-#### Initial Model Choices
-We initially considered multiple regression models to handle the continuous nature of our target variable:
-- **Linear Regression**: Chosen for its simplicity and interpretability.
-- **Multilayer Perceptron (MLP) Regressor**: Selected for its ability to capture non-linear relationships that might exist between the predictors and the target.
+**Linear Regression**: Chosen for its simplicity, interpretability, and widespread use in predictive analytics. Linear regression is particularly useful in understanding the direct relationship between each predictor variable and the response variable, providing clear insights into how each college performance metric might influence NBA success.
+
+**Multilayer Perceptron (MLP) Regressor**: Selected for its ability to model nonlinear relationships and interactions between predictors that linear regression might not capture. This model type is part of the neural networks family, offering the flexibility to learn complex patterns in the data, potentially leading to more accurate predictions.
 
 ### Predictor Variables
 The predictor variables initially included were:
@@ -114,6 +135,7 @@ These variables were chosen due to their direct relationship with scoring perfor
 
 ### Data Splitting
 The data was split into training and test sets with a 70-30 ratio, using a random seed for reproducibility (`random_state=999`). This split was chosen to provide a substantial training set for model development while leaving a sizable portion of data for testing model validity.
+
 ```{r splitting, echo=FALSE}
 
 set.seed(999)
@@ -140,8 +162,11 @@ test_data <- model.matrix(~ conf - 1, data = test_data) %>% as.data.frame() %>%
 
 
 ### Model Fitting and Diagnostics
-Each model was trained on the training data set:
-- **Linear Regression and MLP Regressor**: Both models were fitted using their respective methods from the `scikit-learn` library.
+Each model was trained using the respective fitting functions in R:
+
+The Linear Regression model was fitted using the lm() function.
+The MLP model was fitted using the nnet() package, with specifications for the hidden layer structure and regularization to prevent overfitting.
+
 ```{r modelfitting, echo=FALSE}
 
 linear_model <- lm(NBA_points ~ eFG + TS_per + College_points, data = train_data)
@@ -161,15 +186,21 @@ mlp_model <- nnet(NBA_points ~ eFG + TS_per + College_points,
 
 summary(mlp_model)
 ```
+### Model Diagnostics
 
+Residual Analysis: Residual plots were examined for patterns that might suggest inadequacies in the model forms. For the linear model, residuals were checked for homoscedasticity and normality.
 
-#### Model Evaluation Metrics
-To evaluate model performance, we calculated:
-- Mean Squared Error (MSE)
-- R-squared (R²)
+Shapiro-Wilk Test: Conducted to test the normality of residuals in the linear regression model, where a significant result (p < 2.2e-16) suggested deviations from normality, indicating potential issues with underlying assumptions.
 
-These metrics provide insights into the accuracy and explanatory power of the models, respectively.
+Performance Metrics: Mean Squared Error (MSE) and R-squared were calculated for both models to assess their accuracy and explanatory power.
+
 ```{r evalmetrics, echo=FALSE}
+
+# Residual plot for Linear Model
+plot(residuals(linear_model), type = 'p', main = "Residual Plot for Linear Model")
+
+# Checking normality of residuals
+shapiro.test(residuals(linear_model))
 
 # Linear model evaluation
 predictions_lm <- predict(linear_model, newdata = test_data)
@@ -191,12 +222,58 @@ model_performance <- data.frame(
 print(model_performance)
 
 ```
+### Consideration of Model Violations
 
-```{r results, echo=FALSE}
+The low R-squared value from the linear model suggested limited explanatory power, prompting further exploration with the MLP model. Despite improved flexibility in capturing non-linear relationships with the MLP, the complexity did not substantially increase the explanatory power as reflected in the metrics. This suggests that further model tuning or alternative modeling approaches might be necessary to enhance predictive performance.
 
-library(ggplot2)
+## Results
 
-# Assuming 'predictions_lm' and 'predictions_mlp' are already created from previous steps
+We deployed two models: Linear Regression and Multilayer Perceptron (MLP) Regressor. The analysis presented here focuses on the output of these models, particularly examining how well they address the research questions through their predictive capabilities.
+
+### Model Performance Metrics
+
+```{r final, echo=FALSE}
+
+# Load necessary libraries
+library(ModelMetrics)  # For mse and r2_score
+
+# Assume merged_points is already in your environment
+set.seed(999)
+training_indices <- createDataPartition(merged_points$NBA_points, p = 0.7, list = FALSE)
+train_data <- merged_points[training_indices, ]
+test_data <- merged_points[-training_indices, ]
+
+# Prepare data for modeling
+train_x <- train_data[, c("eFG", "TS_per", "College_points")]
+train_y <- train_data$NBA_points
+test_x <- test_data[, c("eFG", "TS_per", "College_points")]
+test_y <- test_data$NBA_points
+
+
+linear_model <- lm(NBA_points ~ eFG + TS_per + College_points, data = train_data)
+summary(linear_model)
+
+# Predictions and model evaluation
+predictions_lm <- predict(linear_model, newdata = test_data)
+mse_lm <- mse(test_y, predictions_lm)
+r2_lm <- R2(predictions_lm, test_y)
+print(paste("Linear Model Test MSE:", mse_lm))
+print(paste("Linear Model Test R2:", r2_lm))
+
+```
+
+The evaluation of our models' performance is based on two primary statistics: Mean Squared Error (MSE) and R-squared (R²), which provide insight into the models' accuracy and the proportion of variance in NBA points they explain.
+***Linear Regression Model:***
+MSE: 13.55590
+R²: 0.01200178
+***MLP Regressor:***
+MSE: 14.38812
+R²: 0.02530211
+
+These metrics indicate a relatively low explanatory power for both models, highlighting the challenges in using collegiate performance alone to predict NBA success.
+
+### Visual Assessment of Model Predictions
+```{r plotting models, echo=FALSE}
 
 # Creating a data frame for plotting
 actual_vs_predicted_lm <- data.frame(
@@ -224,103 +301,43 @@ ggplot(all_predictions, aes(x = Actual, y = Predicted, color = Model)) +
        y = "Predicted NBA Points per Game") +
   theme_minimal() +
   scale_color_manual(values = c("blue", "green"))  # Custom colors for each model
-
 ```
 
+To visually assess model performance, we plotted the actual versus predicted NBA points for both models:
 
-### Model Diagnostics and Validation
-After fitting the models, we conducted diagnostics to check for:
-- **Homoscedasticity**: Ensuring that the residuals have constant variance across predictions.
-- **Normality of Residuals**: Checked using Q-Q plots and Shapiro-Wilk tests.
+The Linear Regression model shows a clustering of predictions around the lower range of NBA points, indicating limited predictive variability and a tendency to underpredict the performance of higher-scoring rookies.
+The MLP Regressor exhibits greater spread in predictions, suggesting it captures more complexity in the data. However, the spread includes significant prediction errors, as evident from points far from the line of perfect prediction.
+This visual comparison underscores the models' struggles to accurately predict NBA rookie points and suggests potential areas for model refinement.
 
-Violations of model assumptions were addressed by considering transformation of predictor variables and adding interaction terms where necessary.
-```{r plotting, echo=FALSE}
+### Interpretation of Key Results
+The coefficients from the Linear Regression model provide a quantitative measure of how each predictor influences NBA rookie success:
 
-# Residual plot for Linear Model
-plot(residuals(linear_model), type = 'p', main = "Residual Plot for Linear Model")
+College Points: The positive coefficient (0.10153, p-value = 0.0032) implies that higher scores in college predict higher NBA rookie scores, validating the hypothesis that college scoring prowess translates to professional success to some extent.
+Effective Field Goal Percentage (eFG%) and True Shooting Percentage (TS%): These variables did not show significant predictive power in the model, suggesting that shooting efficiency in college may not directly correlate with NBA success, possibly due to differences in game pace, defensive intensity, and other professional factors.
 
-# Checking normality of residuals
-shapiro.test(residuals(linear_model))
+## Discussion
 
-```
+### Summary of Findings
 
-### Final Model Selection
-The final model selection was based on a combination of:
-- Performance metrics (lower MSE and higher R²)
-- Diagnostic results
-- Simplicity and interpretability for stakeholders
+Our study aimed to predict NBA rookie success from college basketball statistics, focusing on points per game as a key indicator of performance. The analysis utilized linear regression and multilayer perceptron (MLP) models to determine the predictive power of college points per game, effective field goal percentage (eFG%), and true shooting percentage (TS%). The results highlighted that while college points had a statistically significant positive impact on NBA rookie points, the shooting percentages did not show strong predictive power. This suggests that while scoring ability in college can be a predictor of scoring in the NBA, factors measured by eFG% and TS% in college settings do not translate directly to professional success.
 
-```{r final, echo=FALSE}
+### Limitations
 
-# Load necessary libraries
-library(caret)
-library(nnet)  # For MLP
-library(dplyr)
-library(ModelMetrics)  # For mse and r2_score
+One major limitation of our study is the potential for overfitting, especially with the MLP model, which could compromise the generalizability of our findings. The models demonstrated low R² values, indicating they captured only a small fraction of the variance in rookie NBA points. This could be due to the complexity of NBA success, which is influenced by a myriad of factors beyond collegiate statistical performance such as physical attributes, psychological factors, and team dynamics.
 
-# Assume merged_points is already in your environment
-set.seed(999)
-training_indices <- createDataPartition(merged_points$NBA_points, p = 0.7, list = FALSE)
-train_data <- merged_points[training_indices, ]
-test_data <- merged_points[-training_indices, ]
+The dataset's scope could also limit the analysis. For instance, the dataset includes only players who made it to the NBA, potentially omitting college players who did not progress to professional basketball. This selection bias might distort the relationship between college statistics and NBA success.
 
-# Prepare data for modeling
-train_x <- train_data[, c("eFG", "TS_per", "College_points")]
-train_y <- train_data$NBA_points
-test_x <- test_data[, c("eFG", "TS_per", "College_points")]
-test_y <- test_data$NBA_points
+### Reliability and Validity
 
-```
-
-```{r summarized, echo=FALSE}
-
-linear_model <- lm(NBA_points ~ eFG + TS_per + College_points, data = train_data)
-summary(linear_model)
-
-# Predictions and model evaluation
-predictions_lm <- predict(linear_model, newdata = test_data)
-mse_lm <- mse(test_y, predictions_lm)
-r2_lm <- R2(predictions_lm, test_y)
-print(paste("Linear Model Test MSE:", mse_lm))
-print(paste("Linear Model Test R2:", r2_lm))
-
-```
-
-### Results
-In this analysis, we employed several models to predict NBA rookie success based on their college performance metrics. The final model selection included Linear Regression and Multilayer Perceptron (MLP). The predictive accuracy of these models was evaluated based on Mean Squared Error (MSE) and R-squared values.
-
-Model Performance
-The Multilayer Perceptron (MLP) model exhibited the highest predictive accuracy with an R-squared value of 0.841, indicating that approximately 84.1% of the variance in NBA rookie points per game can be explained by the model. The MSE for this model was also the lowest among the three, suggesting fewer errors on average between the predicted and actual values.
-
-Key variables that significantly influenced the predictions included:
-
-College_points: There was a strong positive correlation between points scored per game in college and in the NBA, emphasizing the importance of scoring ability transition from college to the professional level.
-eFG% and TS%: These efficiency metrics from college games also showed a strong relationship with NBA success, indicating that not only the quantity but also the quality of shots are critical predictors.
-These findings underscore the model's capability to leverage detailed college performance statistics to forecast NBA success, thus addressing the primary research question effectively.
-
-### Discussion
-Summary of Findings
-The analysis revealed that certain college performance metrics, such as scoring averages and shooting efficiencies, are reliable indicators of NBA rookie success. This suggests that teams and scouts looking to draft new talents from college leagues should consider these metrics comprehensively.
-
-Limitations
-While the models used provided substantial insights, they are not without limitations:
-
-Data Limitations: The analysis was confined to players who had both NBA and college data available, potentially omitting late bloomers who took longer to reach the NBA.
-Model Assumptions: Each model comes with inherent assumptions. For example, the linearity assumption in the Linear Regression may not adequately capture the complex dynamics of sports performance transitions.
-Validity and Reliability
-The reliability of the data is generally high as it originates from established databases like Kaggle. However, the validity of the predictions could be affected by changes in sports dynamics, such as changes in game rules or player roles, which aren't accounted for in historical data.
+While the data sources are reliable, being derived from comprehensive sports statistics databases, the validity of the conclusions might still be affected by the aforementioned selection bias and the exclusion of variables such as player injuries, mid-season trades, and changes in team strategy. These factors are crucial for a holistic assessment of a player’s performance but were not available in the datasets used.
 
 ### Future Work
 
-There are a couple of limitations with our project that are important to address. The first being predicting points per game of a rookie is very difficult. We found that when just using a player's college statistics was very difficult and even when using a simple multi layered perceptron, we were not able to train a model well. We solved this problem by deciding to also use each player's NBA minutes. We did this because we assumed that an NBA head coach or NBA general manager would have an idea of how much time the player would get a game. Using this assumption, our models performed much better. This shows that time played is an extremely important predictor and compliments the other predictors very well.
+To enhance the robustness of future models, it would be beneficial to incorporate additional predictors such as player age at draft, physical measurements (e.g., height, wingspan), and perhaps more nuanced metrics of player efficiency and defensive contributions. Including data on player development over their first few NBA seasons could also help in understanding how college performance correlates with long-term professional success.
 
-Another limitation is the amount of samples we had. We were able to field over 1000 samples which is a solid amount, but generally predictive models are trained on a lot more. For example, the dataset we used in homework 10 had sixty thousand samples, so sixty times what was available to us. I think given a similar amount of data, we could have created a model that performed better in MSE and r2. Having more data that is correct is often a major advantage in making a better model. 
-Our original goal was to predict the success of an NBA rookie based on their college statistics. The challenge with this was: How do we quantify what makes an NBA rookie successful? There is no mark or cutoff that makes a player successful or not. I think if we were able to create a classification model, it also would have performed better than our current models, but classifying success is very tricky and something we could not determine.
+Advanced modeling techniques could also be explored. For instance, ensemble methods like random forests or boosted trees might capture complex nonlinear relationships more effectively than MLPs or linear models. Furthermore, incorporating player tracking data, which includes detailed movement data during games, could provide deeper insights into how college performance translates into NBA contexts.
 
-In the future I think having access to more data is critical in order to create a better predictive model. If we had more time to learn about and explore machine learning techniques, we could have utilized those techniques to make our model better. As we learned about in module 10, there are more deep learning techniques than just multi layered perceptrons. I think making better models means utilizing deep learning and more flexible techniques. 
+Future studies should also consider integrating qualitative assessments such as scouting reports to complement the quantitative analysis. Comparisons with existing literature on predictors of sports performance would help in contextualizing the findings within broader sports analytics research.
 
-
-### Conclusion
-The study successfully demonstrates the use of statistical modeling to predict NBA rookie success from college performance metrics, with significant predictors being scoring averages and shooting efficiencies. While the current models offer strong predictive power, continuous improvement and validation with new data and techniques will ensure their relevance and accuracy. Future research expanding on data diversity and modeling complexity holds promise for further enhancing predictive capabilities in sports analytics.
 
 
